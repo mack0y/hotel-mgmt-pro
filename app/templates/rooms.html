@@ -1,0 +1,133 @@
+<!-- app/templates/rooms.html -->
+{% extends "base.html" %}
+{% block title %}Room Status Board{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <h1 class="mb-4">🏨 Room Status Board</h1>
+  <a href="{{ url_for('routes.dashboard') }}" class="btn btn-outline-secondary btn-sm mb-3">
+    &larr; Back to Dashboard
+  </a>
+
+  <div class="row g-4">
+    {% for room, booking in room_status.items() %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card shadow-sm h-100 room-card">
+        <!-- Room Header -->
+        <div class="card-header d-flex justify-content-between align-items-center
+                    {% if room.status == 'Maintenance' %}bg-secondary text-white
+                    {% elif booking %}bg-primary text-white
+                    {% else %}bg-success text-white{% endif %}">
+          <h5 class="mb-0">{{ room.room_number }}</h5>
+          <span class="badge bg-light text-dark">
+            {% if room.status == 'Maintenance' %}🛠️ Maintenance
+            {% elif booking %}🛏️ Occupied
+            {% else %}✅ Available{% endif %}
+          </span>
+        </div>
+
+        <div class="card-body">
+          {% if booking %}
+          <ul class="list-unstyled">
+            <li><strong>Guest:</strong> {{ booking.guest_name }}</li>
+            <li><strong>Stay:</strong>
+              {{ booking.check_in.strftime('%b %d') }} →
+              {{ booking.check_out.strftime('%b %d') }}
+              ({{ (booking.check_out - booking.check_in).days }} nights)
+            </li>
+            {% if booking.special_requests %}
+            <li><strong>Request:</strong> <small class="text-muted">{{ booking.special_requests }}</small></li>
+            {% endif %}
+
+            <!-- Service Needs -->
+            <li class="mt-2">
+              {% if booking.needs_cleaning %}
+                <span class="badge bg-danger">🧹 Needs Cleaning</span>
+              {% endif %}
+              {% if booking.needs_linens_change %}
+                <span class="badge bg-info text-dark">🛏️ Change Linens</span>
+              {% endif %}
+              {% if not booking.needs_cleaning and not booking.needs_linens_change %}
+                <span class="text-success">✅ All good</span>
+              {% endif %}
+            </li>
+          </ul>
+          {% else %}
+          <p class="text-muted">No guest. Ready for booking.</p>
+          {% endif %}
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="card-footer">
+          {% if booking %}
+            <!-- Guest is staying -->
+            <div class="d-grid gap-2">
+              <!-- Check Out -->
+              <form method="POST" action="{{ url_for('routes.checkout', booking_id=booking.id) }}" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="btn btn-outline-danger btn-sm w-100"
+                        onclick="return confirm('Check out {{ booking.guest_name }}?')">
+                  🔚 Check Out
+                </button>
+              </form>
+
+              <!-- Request Cleaning -->
+              {% if not booking.needs_cleaning %}
+                <form method="POST" action="{{ url_for('routes.request_cleaning', booking_id=booking.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                  <button type="submit" class="btn btn-outline-warning btn-sm w-100">
+                    🧹 Request Cleaning
+                  </button>
+                </form>
+              {% else %}
+                <span class="badge bg-danger w-100">🧹 Needs Cleaning</span>
+              {% endif %}
+
+              <!-- Request Linens Change -->
+              {% if not booking.needs_linens_change %}
+                <form method="POST" action="{{ url_for('routes.request_linens', booking_id=booking.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                  <button type="submit" class="btn btn-outline-info btn-sm text-dark w-100">
+                    🛏️ Request Linens Change
+                  </button>
+                </form>
+              {% else %}
+                <span class="badge bg-info text-dark w-100">🛏️ Needs Linens</span>
+              {% endif %}
+
+              <!-- Extend & Transfer -->
+              <a href="{{ url_for('routes.extend_stay', booking_id=booking.id) }}" class="btn btn-outline-primary btn-sm">
+                📅 Extend Stay
+              </a>
+              <a href="{{ url_for('routes.room_transfer', booking_id=booking.id) }}" class="btn btn-outline-warning btn-sm text-dark">
+                🔄 Room Transfer
+              </a>
+            </div>
+          {% else %}
+            <!-- Room is available -->
+            <div class="d-grid gap-2">
+              <a href="{{ url_for('routes.book') }}" class="btn btn-success btn-sm">
+                📝 Book Room
+              </a>
+              {% if room.status != 'Maintenance' %}
+                <a href="{{ url_for('routes.mark_maintenance', room_id=room.id) }}" 
+                   class="btn btn-outline-secondary btn-sm"
+                   onclick="return confirm('Mark {{ room.room_number }} as needing maintenance?')">
+                  🔧 Needs Maintenance
+                </a>
+              {% else %}
+                <span class="badge bg-secondary">🛠️ Under Maintenance</span>
+                <a href="{{ url_for('routes.unmark_maintenance', room_id=room.id) }}" 
+                   class="btn btn-outline-success btn-sm mt-1">
+                  ✅ Back to Service
+                </a>
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

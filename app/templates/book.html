@@ -1,0 +1,101 @@
+<!-- app/templates/book.html -->
+{% extends "base.html" %}
+{% block title %}New Booking{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">🛎️ New Booking</h4>
+        </div>
+        <div class="card-body p-4">
+          <form method="POST" class="needs-validation" novalidate>
+            {{ form.hidden_tag() }}
+
+            <!-- Guest Name -->
+            <div class="mb-3">
+              {{ form.guest_name.label(class="form-label fw-semibold") }}
+              {{ form.guest_name(class="form-control form-control-lg", placeholder="Enter guest full name", required=True) }}
+              {% if form.guest_name.errors %}
+                <div class="text-danger small mt-1"><i class="fas fa-exclamation-circle"></i> {{ form.guest_name.errors[0] }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Guest Email -->
+            <div class="mb-3">
+              {{ form.guest_email.label(class="form-label fw-semibold") }}
+              {{ form.guest_email(class="form-control form-control-lg", type="email", placeholder="guest@example.com", required=True) }}
+              {% if form.guest_email.errors %}
+                <div class="text-danger small mt-1"><i class="fas fa-exclamation-circle"></i> {{ form.guest_email.errors[0] }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Room -->
+            <div class="mb-3">
+              {{ form.room_id.label(class="form-label fw-semibold") }}
+              {{ form.room_id(class="form-select form-select-lg", required=True) }}
+              {% if form.room_id.errors %}
+                <div class="text-danger small mt-1"><i class="fas fa-exclamation-circle"></i> {{ form.room_id.errors[0] }}</div>
+              {% endif %}
+
+              {% if form.room_id.choices|length == 1 and form.room_id.choices[0][0] == -1 %}
+                <div class="alert alert-warning mt-2 mb-0">
+                  <i class="fas fa-times-circle"></i> No rooms available for booking.
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="row">
+              <!-- Check-In -->
+              <div class="col-md-6 mb-3">
+                {{ form.check_in.label(class="form-label fw-semibold") }}
+                {{ form.check_in(
+                    class="form-control form-control-lg",
+                    type="date",
+                    required=True,
+                    min=today.strftime('%Y-%m-%d')
+                ) }}
+                {% if form.check_in.errors %}
+                  <div class="text-danger small mt-1"><i class="fas fa-exclamation-circle"></i> {{ form.check_in.errors[0] }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Check-Out -->
+              <div class="col-md-6 mb-3">
+                {{ form.check_out.label(class="form-label fw-semibold") }}
+                {{ form.check_out(
+                    class="form-control form-control-lg",
+                    type="date",
+                    required=True,
+                    min=today.strftime('%Y-%m-%d')
+                ) }}
+                {% if form.check_out.errors %}
+                  <div class="text-danger small mt-1"><i class="fas fa-exclamation-circle"></i> {{ form.check_out.errors[0] }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="mb-4">
+              {{ form.notes.label(class="form-label fw-semibold") }}
+              {{ form.notes(class="form-control", rows="3", placeholder="Special requests, notes, etc.") }}
+            </div>
+
+            <!-- Buttons -->
+            <div class="d-flex gap-2">
+              <a href="{{ url_for('routes.bookings') }}" class="btn btn-outline-secondary btn-lg px-4">
+                <i class="fas fa-arrow-left"></i> Back
+              </a>
+              <button type="submit" class="btn btn-success btn-lg px-4">
+                <i class="fas fa-calendar-check"></i> Book Room
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

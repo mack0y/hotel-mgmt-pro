@@ -1,0 +1,147 @@
+<!-- app/templates/calendar.html -->
+{% extends "base.html" %}
+{% block title %}Calendar - {{ month_name }} {{ year }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-xl-10 col-lg-12">
+      <!-- Calendar Card -->
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white text-center py-3">
+          <h3 class="mb-0">
+            📅 {{ month_name }} {{ year }}
+          </h3>
+        </div>
+
+        <div class="card-body p-4">
+          <!-- Back Button -->
+          <div class="mb-3">
+            <a href="{{ url_for('routes.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+              &larr; Back to Dashboard
+            </a>
+          </div>
+
+          <!-- Legend -->
+          <div class="mb-4 p-3 bg-light rounded">
+            <h6 class="mb-2">📅 Legend:</h6>
+            <div class="d-flex flex-wrap gap-2">
+              <span class="badge bg-success px-3 py-2">✅ Check-In</span>
+              <span class="badge bg-warning text-dark px-3 py-2">🛏️ Staying</span>
+              <span class="badge bg-info text-white px-3 py-2">📅 Today</span>
+            </div>
+          </div>
+
+          <!-- Calendar Table -->
+          <div class="table-responsive rounded shadow-sm border">
+            <table class="table table-bordered text-center align-middle mb-0 calendar-table" style="table-layout: fixed;">
+              <thead class="table-dark">
+                <tr>
+                  <th>Sun</th>
+                  <th>Mon</th>
+                  <th>Tue</th>
+                  <th>Wed</th>
+                  <th>Thu</th>
+                  <th>Fri</th>
+                  <th>Sat</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for week in month_days %}
+                <tr>
+                  {% for day in week %}
+                  <td class="{% if day == 0 %}bg-light text-muted{% endif %}">
+                    {% if day != 0 %}
+                      {% set date_str = '%d-%02d-%02d' | format(year, month, day) %}
+                      {% set today_str = (datetime.today()).strftime('%Y-%m-%d') %}
+                      {% set display_date = '%d %s %d' | format(day, month_name, year) %}
+
+                      <!-- Day Number -->
+                      {% if date_str == today_str %}
+                        <div class="fw-bold text-white bg-info rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                          {{ day }}
+                        </div>
+                      {% else %}
+                        <div class="fw-bold text-primary">{{ day }}</div>
+                      {% endif %}
+
+                      <!-- Bookings Indicator (Click to View) -->
+                      {% if calendar_bookings.get(date_str) %}
+                        <div class="mt-1">
+                          <a href="#" 
+                          class="badge bg-secondary text-white text-decoration-none" 
+                          data-bs-toggle="modal" 
+                          data-bs-target="#bookingsModal" 
+                          data-date="{{ display_date }}"
+                          data-bookings='{{ calendar_bookings[date_str] | tojson | safe }}'>
+                          📅 {{ calendar_bookings[date_str] | length }} booking{{ 's' if calendar_bookings[date_str] | length > 1 else '' }}
+                        </a>
+                        </div>
+                      {% endif %}
+                    {% endif %}
+                  </td>
+                  {% endfor %}
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bookings Modal -->
+<div class="modal fade" id="bookingsModal" tabindex="-1" aria-labelledby="bookingsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="bookingsModalLabel">📅 Bookings</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ul id="bookingsList" class="list-group">
+          <!-- Bookings will be inserted here via JavaScript -->
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript to Populate Modal -->
+<script>
+  const bookingsModal = document.getElementById('bookingsModal');
+  bookingsModal.addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+    const date = button.getAttribute('data-date');
+    const bookings = JSON.parse(button.getAttribute('data-bookings'));
+
+    // Update modal title
+    document.getElementById('bookingsModalLabel').textContent = `📅 Bookings for ${date}`;
+
+    // Clear and populate list
+    const list = document.getElementById('bookingsList');
+    list.innerHTML = '';
+
+    bookings.forEach(b => {
+      const li = document.createElement('li');
+      li.className = b.type === 'check-in' 
+        ? 'list-group-item list-group-item-success' 
+        : 'list-group-item list-group-item-warning';
+      
+      li.innerHTML = `
+        <strong>${b.guest}</strong> 
+        <small class="text-muted">Room ${b.room}</small>
+        <span class="badge ${b.type === 'check-in' ? 'bg-success' : 'bg-warning'} ms-2">
+          ${b.type === 'check-in' ? 'Check-In' : 'Staying'}
+        </span>
+      `;
+      list.appendChild(li);
+    });
+  });
+</script>
+{% endblock %}

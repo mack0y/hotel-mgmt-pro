@@ -1,0 +1,5 @@
+venv\Scripts\activate
+
+http://localhost:5000/book
+
+python run.py
